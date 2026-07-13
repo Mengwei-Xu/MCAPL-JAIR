@@ -1,0 +1,57 @@
+GWENDOLEN
+
+:name: searcher
+
+:Initial Beliefs:
+
+location(l1)
+location(l2)
+location(l3)
+
+:Initial Goals:
+
+mission_complete [achieve]
+
+:Plans:
+
++! mission_complete [achieve]:
+    {
+      ~ B at(L0),
+      B location(L),
+      ~ B checked(L)
+    }
+<-
+    fly_to(L),
+    observe(L);
+
+
++! mission_complete [achieve]:
+    {
+      B at(L),
+      B resolved(L),
+      B location(L1),
+      ~ B checked(L1)
+    }
+<-
+    fly_to(L1),
+    observe(L1);
+
+
++! mission_complete [achieve]:
+    {
+      B at(L),
+      B human(L),
+      ~ B aid_delivered(L)
+    }
+<-
+    deliver_aid(L);
+
+
++! mission_complete [achieve]:
+    {
+      B resolved(l1),
+      B resolved(l2),
+      B resolved(l3)
+    }
+<-
+    complete_mission;

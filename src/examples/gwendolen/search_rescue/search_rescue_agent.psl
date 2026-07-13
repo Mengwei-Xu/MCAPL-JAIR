@@ -1,0 +1,117 @@
+# -----------------------------------------------------------------------------
+# Invariant-style properties for search_rescue_agent.gwen
+# All properties use [] only.
+#
+# Assumed environment:
+#   human.present = true
+#   human.x = 2
+#   human.y = 2
+# -----------------------------------------------------------------------------
+
+# 1. If the agent leaves, then every square has been checked.
+1: [] ( B(searcher, leave) ->
+  (
+    B(searcher, checked(0,0)) &
+    B(searcher, checked(0,1)) &
+    B(searcher, checked(0,2)) &
+    B(searcher, checked(1,0)) &
+    B(searcher, checked(1,1)) &
+    B(searcher, checked(1,2)) &
+    B(searcher, checked(2,0)) &
+    B(searcher, checked(2,1)) &
+    B(searcher, checked(2,2))
+  )
+)
+
+
+# 2. If the agent leaves, then the configured human has been assisted.
+2: [] ( B(searcher, leave) -> B(searcher, assisted(2,2)) )
+
+
+# 3. If the agent believes human(2,2), then square (2,2) has been checked.
+3: [] ( B(searcher, human(2,2)) -> B(searcher, checked(2,2)) )
+
+
+# 4. If the agent assists at (2,2), then it believes there is a human there.
+4: [] ( B(searcher, assisted(2,2)) -> B(searcher, human(2,2)) )
+
+
+# 5. The configured human square is never marked empty.
+5: [] ( ~B(searcher, empty(2,2)) )
+
+
+# 6. Empty squares must have been checked.
+6: [] (
+  ( B(searcher, empty(0,0)) -> B(searcher, checked(0,0)) ) &
+  ( B(searcher, empty(0,1)) -> B(searcher, checked(0,1)) ) &
+  ( B(searcher, empty(0,2)) -> B(searcher, checked(0,2)) ) &
+  ( B(searcher, empty(1,0)) -> B(searcher, checked(1,0)) ) &
+  ( B(searcher, empty(1,1)) -> B(searcher, checked(1,1)) ) &
+  ( B(searcher, empty(1,2)) -> B(searcher, checked(1,2)) ) &
+  ( B(searcher, empty(2,0)) -> B(searcher, checked(2,0)) ) &
+  ( B(searcher, empty(2,1)) -> B(searcher, checked(2,1)) ) &
+  ( B(searcher, empty(2,2)) -> B(searcher, checked(2,2)) )
+)
+
+
+# 7. A square cannot be both empty and contain a human.
+7: [] (
+  ( ~B(searcher, empty(0,0)) || ~B(searcher, human(0,0)) ) &
+  ( ~B(searcher, empty(0,1)) || ~B(searcher, human(0,1)) ) &
+  ( ~B(searcher, empty(0,2)) || ~B(searcher, human(0,2)) ) &
+  ( ~B(searcher, empty(1,0)) || ~B(searcher, human(1,0)) ) &
+  ( ~B(searcher, empty(1,1)) || ~B(searcher, human(1,1)) ) &
+  ( ~B(searcher, empty(1,2)) || ~B(searcher, human(1,2)) ) &
+  ( ~B(searcher, empty(2,0)) || ~B(searcher, human(2,0)) ) &
+  ( ~B(searcher, empty(2,1)) || ~B(searcher, human(2,1)) ) &
+  ( ~B(searcher, empty(2,2)) || ~B(searcher, human(2,2)) )
+)
+
+
+# 8. No human is ever believed to be at any square other than (2,2).
+8: [] (
+  ~B(searcher, human(0,0)) &
+  ~B(searcher, human(0,1)) &
+  ~B(searcher, human(0,2)) &
+  ~B(searcher, human(1,0)) &
+  ~B(searcher, human(1,1)) &
+  ~B(searcher, human(1,2)) &
+  ~B(searcher, human(2,0)) &
+  ~B(searcher, human(2,1))
+)
+
+
+# 9. No non-human square is ever assisted.
+9: [] (
+  ~B(searcher, assisted(0,0)) &
+  ~B(searcher, assisted(0,1)) &
+  ~B(searcher, assisted(0,2)) &
+  ~B(searcher, assisted(1,0)) &
+  ~B(searcher, assisted(1,1)) &
+  ~B(searcher, assisted(1,2)) &
+  ~B(searcher, assisted(2,0)) &
+  ~B(searcher, assisted(2,1))
+)
+
+
+# 10. If the agent leaves, then it has discovered the configured human.
+10: [] ( B(searcher, leave) -> B(searcher, human(2,2)) )
+
+
+# 11. If the agent leaves, then all non-human squares are empty.
+11: [] ( B(searcher, leave) ->
+  (
+    B(searcher, empty(0,0)) &
+    B(searcher, empty(0,1)) &
+    B(searcher, empty(0,2)) &
+    B(searcher, empty(1,0)) &
+    B(searcher, empty(1,1)) &
+    B(searcher, empty(1,2)) &
+    B(searcher, empty(2,0)) &
+    B(searcher, empty(2,1))
+  )
+)
+
+
+# 12. If a square is assisted, then it has been checked.
+12: [] ( B(searcher, assisted(2,2)) -> B(searcher, checked(2,2)) )

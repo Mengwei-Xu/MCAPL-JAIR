@@ -1,0 +1,129 @@
+GWENDOLEN
+
+:name: searcher
+
+:Initial Beliefs:
+
+location(l1)
+location(l2)
+location(l3)
+location(l4)
+location(l5)
+location(l6)
+location(l7)
+location(l8)
+location(l9)
+location(l10)
+
+:Initial Goals:
+
+mission_complete [achieve]
+
+:Plans:
+
+// -----------------------------------------------------------------------------
+// Case 1.
+// The drone has no current location.
+//
+// It selects an unchecked location, flies there, and observes it.
+//
+// fly_to(L):
+//     removes any previous at(...)
+//     adds at(L)
+//
+// observe(L):
+//     always adds checked(L)
+//
+//     if the location is empty:
+//         adds empty(L)
+//         adds resolved(L)
+//
+//     if a human is present:
+//         adds human(L)
+//         does not add resolved(L)
+// -----------------------------------------------------------------------------
+
++! mission_complete [achieve]:
+    {
+      ~ B at(L0),
+      B location(L),
+      ~ B checked(L)
+    }
+<-
+    fly_to(L),
+    observe(L);
+
+
+// -----------------------------------------------------------------------------
+// Case 2.
+// The current location has been resolved and another unchecked location
+// remains.
+//
+// The drone selects another unchecked location, flies there, and observes it.
+//
+// resolved(L) is added explicitly by the environment:
+//     - after observing an empty location; or
+//     - after delivering aid to a human at that location.
+// -----------------------------------------------------------------------------
+
++! mission_complete [achieve]:
+    {
+      B at(L),
+      B resolved(L),
+      B location(L1),
+      ~ B checked(L1)
+    }
+<-
+    fly_to(L1),
+    observe(L1);
+
+
+// -----------------------------------------------------------------------------
+// Case 3.
+// A human has been found at the current location, but aid has not yet been
+// delivered.
+//
+// deliver_aid(L):
+//     adds aid_delivered(L)
+//     adds resolved(L)
+// -----------------------------------------------------------------------------
+
++! mission_complete [achieve]:
+    {
+      B at(L),
+      B human(L),
+      ~ B aid_delivered(L)
+    }
+<-
+    deliver_aid(L);
+
+
+// -----------------------------------------------------------------------------
+// Case 4.
+// Complete the mission only when all ten locations have been resolved.
+//
+// A location becomes resolved only when:
+//     - it has been observed to be empty; or
+//     - a human found there has received aid.
+//
+// complete_mission:
+//     adds mission_complete
+//
+// No inference rules are used.
+// -----------------------------------------------------------------------------
+
++! mission_complete [achieve]:
+    {
+      B resolved(l1),
+      B resolved(l2),
+      B resolved(l3),
+      B resolved(l4),
+      B resolved(l5),
+      B resolved(l6),
+      B resolved(l7),
+      B resolved(l8),
+      B resolved(l9),
+      B resolved(l10)
+    }
+<-
+    complete_mission;
