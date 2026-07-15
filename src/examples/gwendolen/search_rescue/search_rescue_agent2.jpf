@@ -1,10 +1,12 @@
 @using = mcapl
 
 target = ail.util.AJPF_w_AIL
-target.args = ${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent2.ail,${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent.psl,1
+target.args = ${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent2.ail,${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent2.psl,2
 
 listener+=,.listener.ExecTracker
 et.print_insn=false
 et.show_shared=false
 
-log.info = ail.mas.DefaultEnvironment, gwendolen.search_rescue.SearchRescueEnv, ajpf.product.Product
+
+log.info = ail.mas.DefaultEnvironment,gwendolen.search_rescue.SearchRescueEnv,gwendolen.semantics.NondetGwendolenAgent,gwendolen.semantics.BeliefTrace
+log.fine = ail.semantics.AILAgent

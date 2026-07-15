@@ -15,11 +15,11 @@ location(l8)
 
 :Initial Goals:
 
-mission_complete [achieve]
+mission(complete) [achieve]
 
 :Plans:
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       ~ B at(L0),
       B location(L),
@@ -30,7 +30,7 @@ mission_complete [achieve]
     observe(L);
 
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B at(L),
       B resolved(L),
@@ -42,7 +42,7 @@ mission_complete [achieve]
     observe(L1);
 
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B at(L),
       B human(L),
@@ -52,7 +52,7 @@ mission_complete [achieve]
     deliver_aid(L);
 
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B resolved(l1),
       B resolved(l2),

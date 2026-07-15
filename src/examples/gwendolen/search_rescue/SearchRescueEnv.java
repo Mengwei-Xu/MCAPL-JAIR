@@ -178,11 +178,16 @@ public class SearchRescueEnv extends DefaultEnvironment {
          *
          * The corresponding Gwendolen plan ensures that every location
          * has been resolved before this action is selected.
+         *
+         * Executing the action adds the belief mission(complete).
          */
         else if (functor.equals("complete_mission")) {
+            Predicate missionComplete = new Predicate("mission");
+            missionComplete.addTerm(new Predicate("complete"));
+
             addPercept(
                     agName,
-                    new Predicate("mission_complete")
+                    missionComplete
             );
 
             AJPFLogger.info(

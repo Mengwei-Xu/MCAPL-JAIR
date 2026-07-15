@@ -17,7 +17,7 @@ location(l10)
 
 :Initial Goals:
 
-mission_complete [achieve]
+mission(complete) [achieve]
 
 :Plans:
 
@@ -43,7 +43,7 @@ mission_complete [achieve]
 //         does not add resolved(L)
 // -----------------------------------------------------------------------------
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       ~ B at(L0),
       B location(L),
@@ -66,7 +66,7 @@ mission_complete [achieve]
 //     - after delivering aid to a human at that location.
 // -----------------------------------------------------------------------------
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B at(L),
       B resolved(L),
@@ -88,7 +88,7 @@ mission_complete [achieve]
 //     adds resolved(L)
 // -----------------------------------------------------------------------------
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B at(L),
       B human(L),
@@ -107,12 +107,12 @@ mission_complete [achieve]
 //     - a human found there has received aid.
 //
 // complete_mission:
-//     adds mission_complete
+//     adds mission(complete)
 //
 // No inference rules are used.
 // -----------------------------------------------------------------------------
 
-+! mission_complete [achieve]:
++! mission(complete) [achieve]:
     {
       B resolved(l1),
       B resolved(l2),

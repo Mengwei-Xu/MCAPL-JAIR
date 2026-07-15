@@ -5,6 +5,10 @@ import ail.syntax.Intention;
 import ail.util.AILexception;
 import ajpf.util.AJPFLogger;
 import ajpf.util.choice.Choice;
+import ail.syntax.AILAnnotation;
+import ail.syntax.Literal;
+import ail.syntax.StringTerm;
+
 
 import java.util.ArrayList;
 import java.util.Iterator;
@@ -25,6 +29,9 @@ public class NondetGwendolenAgent extends GwendolenAgent {
 
     private static final String LOGNAME =
             NondetGwendolenAgent.class.getName();
+
+    private static final String BELIEF_LOG =
+            "gwendolen.semantics.BeliefTrace";
 
     public NondetGwendolenAgent(String name) throws AILexception {
         super(name);
@@ -154,5 +161,27 @@ public class NondetGwendolenAgent extends GwendolenAgent {
         }
 
         return count;
+    }
+
+
+    @Override
+    public boolean addBel(
+            Literal belief,
+            AILAnnotation source,
+            StringTerm beliefBase
+    ) {
+        boolean added =
+                super.addBel(belief, source, beliefBase);
+
+        if (added) {
+            AJPFLogger.info(
+                    BELIEF_LOG,
+                    getAgName()
+                            + " added belief: "
+                            + belief
+            );
+        }
+
+        return added;
     }
 }

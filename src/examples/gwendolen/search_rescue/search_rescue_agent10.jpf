@@ -1,7 +1,7 @@
 @using = mcapl
 
 target = ail.util.AJPF_w_AIL
-target.args = ${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent10.ail,${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent.psl,1
+target.args = ${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent10.ail,${mcapl}/src/examples/gwendolen/search_rescue/search_rescue_agent10.psl,9
 
 listener+=,.listener.ExecTracker
 et.print_insn=false
