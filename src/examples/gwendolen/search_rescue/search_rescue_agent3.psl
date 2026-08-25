@@ -19,49 +19,66 @@
 # 2. Mission completion implies that every detected human has received aid.
 
 2: [] (
-  B(searcher, mission(complete))
-  ->
   (
     (
+      B(searcher, mission(complete)) &
       B(searcher, human(l1))
-      ->
-      B(searcher, aid_delivered(l1))
     )
-    &
+    ->
+    B(searcher, aid_delivered(l1))
+  )
+  &
+  (
     (
+      B(searcher, mission(complete)) &
       B(searcher, human(l2))
-      ->
-      B(searcher, aid_delivered(l2))
     )
-    &
+    ->
+    B(searcher, aid_delivered(l2))
+  )
+  &
+  (
     (
+      B(searcher, mission(complete)) &
       B(searcher, human(l3))
-      ->
-      B(searcher, aid_delivered(l3))
     )
+    ->
+    B(searcher, aid_delivered(l3))
   )
 )
 
 
-# 3. A location cannot be both empty and contain a human.
+# 3. A checked location cannot be both empty and contain a human.
 
 3: [] (
   (
-    ~ B(searcher, empty(l1))
-    ||
-    ~ B(searcher, human(l1))
+    B(searcher, checked(l1))
+    ->
+    ~ (
+      B(searcher, empty(l1))
+      &
+      B(searcher, human(l1))
+    )
   )
   &
   (
-    ~ B(searcher, empty(l2))
-    ||
-    ~ B(searcher, human(l2))
+    B(searcher, checked(l2))
+    ->
+    ~ (
+      B(searcher, empty(l2))
+      &
+      B(searcher, human(l2))
+    )
   )
   &
   (
-    ~ B(searcher, empty(l3))
-    ||
-    ~ B(searcher, human(l3))
+    B(searcher, checked(l3))
+    ->
+    ~ (
+      B(searcher, empty(l3))
+      &
+      B(searcher, human(l3))
+    )
   )
 )
 
