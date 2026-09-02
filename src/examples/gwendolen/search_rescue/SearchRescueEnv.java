@@ -16,13 +16,18 @@ public class SearchRescueEnv extends DefaultEnvironment {
             "gwendolen.search_rescue.SearchRescueEnv";
 
     /*
-     * The environment contains at most one hidden human.
+     * Concrete environment configuration.
      *
-     * The agent does not initially know whether a human is present
-     * or at which location the human is located.
+     * These values are supplied by the .ail configuration file.
+     *
+     * humanPresent specifies whether the environment contains a human.
+     * humanLocation specifies the hidden location of that human.
+     * locationNumber specifies the number of locations in this
+     * concrete search-and-rescue instance.
      */
-    private boolean humanPresent = true;
-    private String humanLocation = "l10";
+    private boolean humanPresent;
+    private String humanLocation;
+    private int locationNumber;
 
     @Override
     public void configure(AILConfig configuration) {
@@ -32,19 +37,39 @@ public class SearchRescueEnv extends DefaultEnvironment {
             humanPresent = Boolean.parseBoolean(
                     (String) configuration.get("human.present")
             );
+        } else {
+            throw new IllegalArgumentException(
+                    "Missing required configuration: human.present"
+            );
         }
 
         if (configuration.containsKey("human.location")) {
             humanLocation =
                     ((String) configuration.get("human.location")).trim();
+        } else {
+            throw new IllegalArgumentException(
+                    "Missing required configuration: human.location"
+            );
+        }
+
+        if (configuration.containsKey("location.number")) {
+            locationNumber = Integer.parseInt(
+                    ((String) configuration.get("location.number")).trim()
+            );
+        } else {
+            throw new IllegalArgumentException(
+                    "Missing required configuration: location.number"
+            );
         }
 
         AJPFLogger.info(
                 LOGNAME,
-                "Configured hidden human: present="
+                "Configured environment: humanPresent="
                         + humanPresent
-                        + ", location="
+                        + ", humanLocation="
                         + humanLocation
+                        + ", locationNumber="
+                        + locationNumber
         );
     }
 
@@ -57,13 +82,26 @@ public class SearchRescueEnv extends DefaultEnvironment {
         /*
          * fly_to(L)
          *
-         * Remove the drone's previous location and add at(L).
+         * The drone may either:
+         *
+         *   (1) already be at some location L0, or
+         *   (2) have no current at(...) percept, as in the initial move.
+         *
+         * If at(L0) exists, it is removed before at(L) is added.
+         * If there is no current at(...) percept, there is simply
+         * nothing to remove.
+         *
+         * Effect:
+         *
+         *     - at(L0), if one exists
+         *     + at(L)
          */
         if (functor.equals("fly_to")) {
             Term location = locationArg(act, 0);
             String locationName = location.toString();
 
             removeOldLocation(agName);
+
             addPercept(
                     agName,
                     unaryPredicate("at", location)
@@ -78,21 +116,58 @@ public class SearchRescueEnv extends DefaultEnvironment {
         /*
          * observe(L)
          *
-         * Every observed location becomes checked.
+         * Event-B precondition:
          *
-         * An empty location becomes resolved immediately.
-         * A location containing a human remains unresolved until aid
-         * has been delivered.
+         *     not checked(L)
+         *
+         * The environment then determines which of the two possible
+         * observation outcomes occurs.
+         *
+         * Empty location:
+         *
+         *     + checked(L)
+         *     + empty(L)
+         *     + resolved(L)
+         *
+         * Human location:
+         *
+         *     + checked(L)
+         *     + human(L)
+         *
+         * A human location is not resolved until aid is delivered.
          */
         else if (functor.equals("observe")) {
             Term location = locationArg(act, 0);
             String locationName = location.toString();
+
+            /*
+             * Precondition:
+             *
+             *     not checked(L)
+             */
+            if (hasPercept(
+                    agName,
+                    "checked",
+                    location)) {
+
+                throw new AILexception(
+                        "Precondition of observe("
+                                + locationName
+                                + ") violated: checked("
+                                + locationName
+                                + ") already holds"
+                );
+            }
 
             addPercept(
                     agName,
                     unaryPredicate("checked", location)
             );
 
+            /*
+             * The hidden physical environment determines whether
+             * this is the human-location or empty-location outcome.
+             */
             if (humanPresent
                     && humanLocation.equals(locationName)) {
 
@@ -102,16 +177,19 @@ public class SearchRescueEnv extends DefaultEnvironment {
                 );
 
                 /*
-                 * Do not add resolved(location).
+                 * Do not add resolved(L).
                  *
-                 * A location containing a human becomes resolved only
-                 * after deliver_aid(location).
+                 * The location becomes resolved only after
+                 * deliver_aid(L).
                  */
                 AJPFLogger.info(
                         LOGNAME,
-                        agName + " observed a human at " + locationName
+                        agName + " observed a human at "
+                                + locationName
                 );
+
             } else {
+
                 addPercept(
                         agName,
                         unaryPredicate("empty", location)
@@ -133,57 +211,98 @@ public class SearchRescueEnv extends DefaultEnvironment {
         /*
          * deliver_aid(L)
          *
-         * Aid may be delivered only at the hidden human's location.
-         * Successful delivery resolves that location.
+         * precondition:
+         *
+         *     human(L)
+         *
+         * Effect:
+         *
+         *     + aid_delivered(L)
+         *     + resolved(L)
+         *
+         * The hidden Java variables humanPresent and humanLocation
+         * determine whether human(L) is generated during observation.
+         * Once human(L) has been perceived, human(L) itself is the
+         * action precondition, matching the Event-B action description.
          */
         else if (functor.equals("deliver_aid")) {
             Term location = locationArg(act, 0);
             String locationName = location.toString();
 
-            if (humanPresent
-                    && humanLocation.equals(locationName)) {
+            /*
+             * Precondition:
+             *
+             *     human(L)
+             */
+            if (!hasPercept(
+                    agName,
+                    "human",
+                    location)) {
 
-                addPercept(
-                        agName,
-                        unaryPredicate("aid_delivered", location)
-                );
-
-                addPercept(
-                        agName,
-                        unaryPredicate("resolved", location)
-                );
-
-                AJPFLogger.info(
-                        LOGNAME,
-                        agName + " delivered aid at " + locationName
-                );
-            } else {
-                /*
-                 * This branch should be unreachable because the Gwendolen
-                 * plan requires human(L) before deliver_aid(L) is executed.
-                 *
-                 * No percept is added if an invalid aid delivery is attempted.
-                 */
-                AJPFLogger.warning(
-                        LOGNAME,
-                        agName + " attempted to deliver aid at "
+                throw new AILexception(
+                        "Precondition of deliver_aid("
                                 + locationName
-                                + ", but no human was present"
+                                + ") violated: human("
+                                + locationName
+                                + ") does not hold"
                 );
             }
+
+            addPercept(
+                    agName,
+                    unaryPredicate("aid_delivered", location)
+            );
+
+            addPercept(
+                    agName,
+                    unaryPredicate("resolved", location)
+            );
+
+            AJPFLogger.info(
+                    LOGNAME,
+                    agName + " delivered aid at "
+                            + locationName
+            );
         }
 
         /*
          * complete_mission
          *
-         * The corresponding Gwendolen plan ensures that every location
-         * has been resolved before this action is selected.
+         * precondition:
          *
-         * Executing the action adds the belief mission(complete).
+         *     every location is resolved
+         *
+         * For a concrete instance with locationNumber = n,
+         * this means:
+         *
+         *     resolved(l1)
+         *     ...
+         *     resolved(ln)
+         *
+         * Effect:
+         *
+         *     + mission(complete)
          */
         else if (functor.equals("complete_mission")) {
-            Predicate missionComplete = new Predicate("mission");
-            missionComplete.addTerm(new Predicate("complete"));
+
+            /*
+             * Precondition:
+             *
+             *     all locations are resolved
+             */
+            if (!allLocationsResolved(agName)) {
+                throw new AILexception(
+                        "Precondition of complete_mission violated: "
+                                + "not every location is resolved"
+                );
+            }
+
+            Predicate missionComplete =
+                    new Predicate("mission");
+
+            missionComplete.addTerm(
+                    new Predicate("complete")
+            );
 
             addPercept(
                     agName,
@@ -192,7 +311,8 @@ public class SearchRescueEnv extends DefaultEnvironment {
 
             AJPFLogger.info(
                     LOGNAME,
-                    agName + " completed the search-and-rescue mission"
+                    agName
+                            + " completed the search-and-rescue mission"
             );
         }
 
@@ -200,24 +320,92 @@ public class SearchRescueEnv extends DefaultEnvironment {
     }
 
     /*
-     * Remove any existing at(L) percept before the drone moves.
+     * Check whether an agent-specific percept currently holds.
+     *
+     * Examples:
+     *
+     *     hasPercept(agName, "checked", l1)
+     *     hasPercept(agName, "human", l2)
+     *     hasPercept(agName, "resolved", l3)
+     *
+     * The environment adds these percepts using
+     * addPercept(agName, ...), so they are stored in agPercepts.
      */
-    private void removeOldLocation(String agName) {
-        Predicate oldLocation = new Predicate("at");
-        oldLocation.addTerm(new VarTerm("L"));
+    private boolean hasPercept(
+            String agName,
+            String name,
+            Term location) {
 
-        removeUnifiesPercept(agName, oldLocation);
+        Predicate target =
+                unaryPredicate(name, location);
+
+        return agPercepts.get(agName) != null
+                && agPercepts.get(agName).contains(target);
     }
 
     /*
-     * Return a symbolic location argument such as l1 or l10.
+     * Check the precondition of complete_mission.
+     *
+     * For a concrete instance containing n locations, all
+     * resolved(l1), ..., resolved(ln) percepts must hold.
      */
-    private Term locationArg(Action act, int index) {
-        Term location = act.getTerm(index);
+    private boolean allLocationsResolved(
+            String agName) {
+
+        for (int i = 1; i <= locationNumber; i++) {
+
+            Term location =
+                    new Predicate("l" + i);
+
+            if (!hasPercept(
+                    agName,
+                    "resolved",
+                    location)) {
+
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    /*
+     * Remove any existing at(L) percept before the drone moves.
+     *
+     * If no at(...) percept currently exists, as on the first
+     * execution of fly_to(L), this simply removes nothing.
+     */
+    private void removeOldLocation(
+            String agName) {
+
+        Predicate oldLocation =
+                new Predicate("at");
+
+        oldLocation.addTerm(
+                new VarTerm("L")
+        );
+
+        removeUnifiesPercept(
+                agName,
+                oldLocation
+        );
+    }
+
+    /*
+     * Return the location argument of an action,
+     * such as l1 or l10.
+     */
+    private Term locationArg(
+            Action act,
+            int index) {
+
+        Term location =
+                act.getTerm(index);
 
         if (location == null) {
             throw new IllegalArgumentException(
-                    "Missing location argument in action: " + act
+                    "Missing location argument in action: "
+                            + act
             );
         }
 
@@ -233,14 +421,22 @@ public class SearchRescueEnv extends DefaultEnvironment {
      *     aid_delivered(l10)
      *     resolved(l10)
      *
-     * Cloning prevents the percept from sharing the same mutable term
-     * object as the executed action.
+     * Cloning prevents the percept from sharing the same
+     * mutable term object as the executed action.
      */
-    private Predicate unaryPredicate(String name, Term location) {
-        Predicate predicate = new Predicate(name);
+    private Predicate unaryPredicate(
+            String name,
+            Term location) {
 
-        Term copiedLocation = (Term) location.clone();
-        predicate.addTerm(copiedLocation);
+        Predicate predicate =
+                new Predicate(name);
+
+        Term copiedLocation =
+                (Term) location.clone();
+
+        predicate.addTerm(
+                copiedLocation
+        );
 
         return predicate;
     }
