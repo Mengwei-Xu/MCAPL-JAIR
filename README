@@ -1,49 +1,52 @@
-This software distribution consists of:
+# MCAPL/Gwendolen Search-and-Rescue Case Study
 
-- The Agent JPF (AJPF) extention of the Java Pathfinder model checker for model checking BDI style agent programs.
+This repository contains the **MCAPL/Gwendolen Search-and-Rescue case study** used in our work on the Event-B formalisation and verification of BDI agents.
 
-- The Agent Infrastructure Layer (AIL) toolkit for prototyping interpreters for BDI-style agent programming languages.
+The repository is based on the existing MCAPL framework. The complete MCAPL source tree is retained so that the exact Gwendolen and AJPF setup used in our experiments, including non-deterministic agent execution, can be reproduced directly.
 
-- The Gwendolen BDI agent programming language.
+## Search-and-Rescue Example
 
-- The EASS (Engineering Autonomous Space Software) variant of the Gwendolen Language
+The case-study files are located in:
 
-- The Ethical Gwendolen variant of the Gwendolen Language
+```text
+src/examples/gwendolen/search_rescue/
+```
 
-- The AIL Implementation of the GOAL BDI agent programming language (AIL GOAL).
+The example models a search-and-rescue drone and contains instances ranging from **2 to 10 locations**.
 
-- A Declarative Ethical Governor (DEG) Implementation
+For each instance `n`, where `n = 2, ..., 10`, the directory contains:
 
-- The Juno Context Sensitive version of the HERA system (Juno)
+```text
+search_rescue_agent<n>.gwen   Gwendolen agent program
+search_rescue_agent<n>.ail    AIL execution configuration
+search_rescue_agent<n>.jpf    AJPF model-checking configuration
+search_rescue_agent<n>.psl    properties checked by AJPF
+```
 
-- Verification for BDIPython (PBDI)
+The shared environment is:
 
-- A Really Simple Motorway Simulation (RSMS)
+```text
+SearchRescueEnv.java
+```
 
-src/classes and src/main contains the core classes for each of these libraries 
-   - when Java Pathfinder is being used the classes in src/classes run in the JPF virtual machine while those in src/main run in the native virtual machine
-   
-src/examples contains a number of example programs 
+The `.ail` configurations use MCAPL's `NondetGwendolenAgentBuilder` to allow nondeterministic choices during execution and model checking.
 
-src/peers contains alternative implementations for some methods and classes for use during model checking to increase efficiency by doing some
-   processing natively.  This code is not used in normal operation.
-   
-src/tests contains regression tests.
+## Running the Example
 
-Documentation including installation instructions can be found in the doc folder.
+After MCAPL has been installed and configured normally, the examples can be run using the corresponding `.ail` files.
 
-Problems and Contributions
-==========================
+For example, the 2-location instance uses:
 
-Bug reports and contributions are always welcome.
+```text
+src/examples/gwendolen/search_rescue/search_rescue_agent2.ail
+```
 
-Please contact Louise Dennis, louise.dennis@manchester.ac.uk, by email to make a bug report.
+The corresponding AJPF model-checking configuration is:
 
-To contribute to the MCAPL code base please fork the git repository and then submit a pull request.  We value interaction with other people working on the code base and so would welcome contact from potential contributors to discuss their ideas and plans, though this is not a requirement for contribution.  Please email Louise Dennis, louise.dennis@manchester.ac.uk, if you want to discuss working on the MCAPL code base.
+```text
+src/examples/gwendolen/search_rescue/search_rescue_agent2.jpf
+```
 
-Publications/Repository/Archival Copies
-=======================================
+Replace `2` with any value from `3` to `10` to run or verify the corresponding problem size.
 
-This software is published by the Journal of Open Source Software
-
-[![DOI](http://joss.theoj.org/papers/10.21105/joss.00617/status.svg)](https://doi.org/10.21105/joss.00617)
+The repository preserves the exact case-study programs and configurations used for the execution and scalability experiments reported in the paper.
